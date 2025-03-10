@@ -1,0 +1,23 @@
+Course,Title,Prerequisites,Area,Instructors,Terms,Credits
+150,"""Survey of Computer Science""",[],systems,[Sorenson],"[F, S]",3
+250,"""Introductory Computer Programming""",[],coding,[Sorenson],"[F, S]",4
+251,"""Intermediate Computer Programming""",[250],coding,"[Sorenson, Nipu]","[F, S]",4
+317,"""Discrete Information Structures""",[250],theory,"[Cheng, Rock, Singh]","[F, S]",4
+337,"""System Programming""",[251],systems,[Nowrin],"[F, S]",3
+351,"""Data Structures and Algorithms""",[251],coding,"[Boyland, Singh]","[F, S]",4
+361,"""Introduction to Software Engineering""",[351],development,"[Nipu, Rock]","[F, S]",3
+395,"""Social, Professional, and Ethical Issues""",[],ethics,"[Cheng, Nowrin]","[F, S]",3
+422,"""Introduction to Artificial Intelligence""","[317, 351]",AI,[Mali],[S],3
+423,"""Introduction to Natural Language Processing""",[351],AI,"[Kate, McRoy]",[F],3
+425,"""Introduction to Data Mining""",[251],AI,[Yu],[S],3
+431,"""Programming Languages Concepts""",[351],coding,[Zhao],"[F, S]",3
+458,"""Computer Architecture""",[251],systems,[Thomas],"[F, S]",3
+459,"""Fundamentals of Computer Graphics""",[251],development,"[Singh, Yu]","[F, S]",3
+469,"""Introduction to Computer Security""","[317, 251]",security,[Zeng],[F],3
+520,"""Computer Networks""",[537],systems,[Rezaie],"[F, S]",3
+535,"""Algorithm Design and Analysis""","[317, 351]",theory,"[Cheng, Yu, Singh]","[F, S]",3
+537,"""Introduction to Operating Systems""","[337, 458]",systems,[Nowrin],"[F, S]",3
+552,"""Advanced Object Oriented Programming""","[351, 361]",coding,[Boyland],[S],3
+557,"""Introduction to Databases""",[251],development,[Nipu],"[F, S]",3
+594,"""Capstone Project Preparation""",[361],development,[Nipu],"[F, S]",1
+595,"""Capstone Project""",[594],development,[Nipu],"[F, S]",3

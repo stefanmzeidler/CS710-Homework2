@@ -5,86 +5,58 @@ Created on: 3/7/2025
 Description: Scheduling program using constraint search to create course plans for students.
 Adapted from https://github.com/aimacode/aima-python/blob/master/csp.py.
 """
-
-from csp import *
+from typing import override
+import scheduler_utils
+import csp
 import copy
 import pandas as pd
 import os
+from collections import defaultdict
+
 
 class Scheduler:
     COURSE = 'Course'
     ID = 'ID'
     PROGRAM = 'program'
     PREREQUISITES = "Prerequisites"
+    TRANSFERS = 'transfers'
+    TAKEN = 'taken'
+    MAX_TERMS = 'maxterms'
 
     def __init__(self):
+        # super().__init__(None,None,None,None)
         self.initial_season = None
         self.course_list = None
         self.program_requirements = None
         self.student_list = None
-
-
-    @staticmethod
-    def _create_data_tables(course_file: str, student_file: str, program_requirements_file: str):
-        """
-        Loads data files into memory as tables for processing.
-        :param course_file: The file containing the information for each course.
-        :param student_file: The file containing the information for each student.
-        :param program_requirements_file: The file containing the information for each program.
-        :return: course_list, program_requirements, and student_list tables.
-        """
-        cwd = os.getcwd()
-        course_list = Scheduler._file_to_df(os.path.join(cwd, course_file))
-        course_list.set_index(Scheduler.COURSE, inplace=True)
-        program_requirements = Scheduler._file_to_df(os.path.join(cwd, program_requirements_file))
-        program_requirements.set_index(Scheduler.PROGRAM, inplace=True)
-        student_list = Scheduler._file_to_df(os.path.join(cwd, student_file))
-        student_list.set_index(Scheduler.ID, inplace=True)
-        return course_list, program_requirements, student_list
-
-    @staticmethod
-    def _file_to_df(path: str) -> pd.DataFrame:
-        if not os.path.isfile(path) and os.path.splitext(path)[1] != ".csv":
-            raise ValueError(f"File {path} does not exist or is not a CSV file.")
-        return Scheduler._clean_data(pd.read_csv(path))
-
-    @staticmethod
-    def _clean_data(dframe):
-        dframe.fillna("", inplace=True)
-        for col in dframe.select_dtypes(include=[object]).columns:
-            dframe[col] = dframe[col].apply(Scheduler._clean_data_helper)
-        return dframe
-
-    @staticmethod
-    def _clean_data_helper(values: str):
-        values = values.replace("\"", "").strip()
-        if "[" in values:
-            return Scheduler._to_list(values)
-        return int(values) if values.isdigit() else values
-
-    @staticmethod
-    def _to_list(values):
-        values = values.replace("[", "").replace("]", "").strip()
-        values = values.split(",")
-        if values[0] == "":
-            return []
-        elif values[0].isdigit():
-            return list(map(int, values))
-        else:
-            return [value.strip() for value in values]
+        self.current_student = 0
 
     def plan(self, initial_season: str, course_file: str, student_file: str):
         self.initial_season = initial_season
-        self.course_list, self.program_requirements, self.student_list = Scheduler._create_data_tables(course_file,
+        self.course_list, self.program_requirements, self.student_list = scheduler_utils.create_data_tables(course_file,
                                                                                                        student_file,
                                                                                                        "program_requirements.csv")
-    def _create_csp(self,student):
+        for index, row in self.student_list.iterrows():
+            self.current_student = index
+            self._create_csp()
+
+    def _create_csp(self):
         term = 1
-        courses = self._generate_available_courses([])
-        while not courses.empty:
+        max_terms = self.student_list.at[self.current_student,self.MAX_TERMS]
+        constraints = defaultdict(list)
+        taken_courses = self.student_list.at[self.current_student, self.TRANSFERS] + self.student_list.at[self.current_student, self.TAKEN]
+        courses = []
+        available_courses = self._generate_available_courses(taken_courses)
+        while not available_courses.empty:
+            courses = courses + available_courses
+            for course in courses:
+                for prerequisite in self.course_list.at[course,self.PREREQUISITES]:
+                    ...
 
+            available_courses = self._generate_available_courses(courses)
 
-            ...
+    def prerequisite(self, course_a: int, term_a: int, course_b: int, term_b: int):
+        return term_a >= term_b
 
     def _get_season(self, term):
         if term%2 == 1:
@@ -122,3 +94,20 @@ class Scheduler:
             prerequisites.remove(course_no)
         return prerequisites
 
+class SchedulerCSP(csp.CSP):
+    def  __init__(self,variables, domains, neighbors, constraints):
+        super().__init__(variables, domains, neighbors, constraints)
+
+    @override
+    def nconflicts(self,var,val, assignment):
+
+        ...
+
+
+
+
+def main():
+    my_scheduler = Scheduler()
+    my_scheduler.plan('F','courses.csv','students.csv' )
+
+main()

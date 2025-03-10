@@ -1,0 +1,6 @@
+﻿ID,program,transfers,taken,maxcredits,maxterms,preferences-topics,preferences-instructors
+1,BS,"[250,251]","[317,351]",12,5,"[development,systems,ethics,coding]","[Nipu, Rock,Thomas,Cheng,Nowrin]"
+2,CS-minor,[250],[],6,7,[],[]
+3,BA,[],"[150, 250]",16,7,[],[]
+4,BA,[],[150],16,7,[],[]
+6,CS-minor,[],"[150,250,251,317,395,458]",12,5,[],[]
