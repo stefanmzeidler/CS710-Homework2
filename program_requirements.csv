@@ -1,4 +1,4 @@
-﻿program,total_credits,max_transfer_credits,course_exclusions,optional_course_requirement_level,optional_credits_required,optional_courses_required,required_courses
+﻿program,total_credits,max_transfer_credits,course_exclusions,electives_cutoff,elective_credits_required,elective_courses_required,required_courses
 CS-minor,18,6,[395],300,9,0,[]
 BA,0,0,[],300,0,4,"[150,250,251,317,395,458]"
 BS,0,0,[],400,0,3,"[150,250,251,317,337,351,361,395,431,458,535,537,594,595]"
