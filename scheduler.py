@@ -5,7 +5,7 @@ Created on: 3/7/2025
 Description: Scheduling program using constraint search to create course plans for students.
 Adapted from https://github.com/aimacode/aima-python/blob/master/csp.py.
 """
-from typing import override
+from typing import override, Tuple, Callable
 import scheduler_utils
 import csp
 import copy
@@ -54,6 +54,68 @@ class Scheduler:
         self.electives = None
         self.required_courses = None
 
+
+    class SchedulerCSP:
+        def __init__(self, variables, domains, constraints):
+            self.variables = variables or domains.keys()
+            self.constraints = constraints
+
+        def nconflicts(self, var, val, assignment):
+            """Return the number of conflicts var=val has with other variables."""
+
+            # Subclasses may implement this more efficiently
+            def conflict(var2):
+                return var2 in assignment and not self.constraints(var, val, var2, assignment)
+
+            return count(conflict(v) for v in self.neighbors[var])
+
+    class SchedulerConstraint:
+        def __init__(self, scope, condition):
+            self.scope = scope
+            self.condition = condition
+
+        def holds(self, course, term, assignment):
+            kwargs = {'scope': self.scope, 'course': course, 'term': term, 'assignment': assignment}
+            return self.condition(**kwargs)
+
+    @staticmethod
+    def prerequisite_constraint(*,scope: Tuple[int,int], course, term: int, assignment: dict[int, int]):
+        prerequisite, dependent = scope
+        if prerequisite == 594 and dependent == 595:
+            return (term + 1 == assignment[dependent]) if course == prerequisite else (assignment[prerequisite] == term - 1)
+        return (term < assignment[dependent]) if course == prerequisite else (term > assignment[prerequisite])
+
+    def max_credits_constraint(self,**kwargs):
+        course = kwargs['course']
+        term = kwargs['term']
+        assignment = kwargs['assignment']
+        max_credits = self._get_student_max_credits()
+        courses_in_term = [key for key in assignment if (assignment[key] == term and key != course)]
+        credits_in_term = sum([self._get_course_credits(course_in_term) for course_in_term in courses_in_term])
+        return self._get_course_credits(course) + credits_in_term <= max_credits
+
+    def elective_constraint(self,*, course, term, assignment):
+        electives = [elective for elective in self.electives if
+                     (elective in assignment.keys() and assignment[elective] is not None)]
+        max_electives = self.program_requirements.at[self._get_program(), 'elective_courses_required']
+        if course in electives:
+            # removing from electives is okay so long as...
+            if term is None:
+                 return len(electives)-1 >= max_electives
+            # changing the course is okay if it's already in electives
+            return True
+        else:
+            #if it's already not in electives, fine to keep it out? Unless there are too few, then we want to assign another,
+            # so None would not be valid. Get it in there!
+            if term is None:
+                return len(electives) < max_electives
+            return len(electives)+1 > max_electives
+
+    def season_constraint(self, **kwargs):
+        return self._get_season(kwargs['term']) in kwargs['scope']
+
+
+
     def plan(self, initial_season: str, course_file: str, student_file: str):
         self.initial_season = initial_season
         self.course_list, self.program_requirements, self.student_list = scheduler_utils.create_data_tables(course_file,
@@ -71,46 +133,6 @@ class Scheduler:
             my_csp = self._create_csp()
             solution = csp.min_conflicts(my_csp)
             print(solution)
-
-    class PrerequisiteConstraint:
-        def __init__(self, neighbor):
-            self.neighbor = neighbor
-
-        def __call__(self,course, term, assignment):
-            return term < assignment[self.neighbor]
-
-    class DependencyConstraint:
-        def __init__(self, neighbor):
-            self.neighbor = neighbor
-
-        def __call__(self, course, term, assignment):
-            return term > assignment[self.neighbor]
-
-    def max_credits_constraint(self, course, term, assignment):
-        current_courses = [key for key in assignment if assignment[key] == term]
-        current_credits = sum([self._get_credits(course) for course in current_courses])
-        return self._get_credits(course) + current_credits <= self.student_list.at[self.current_student,Scheduler.MAX_CREDITS]
-
-    def _elective_constraint(self, course, term, assignment):
-        electives = [elective for elective in self.electives if
-                     (elective in assignment.keys() and assignment[elective] is not None)]
-        max_electives = self.program_requirements.at[self._get_program(), 'elective_courses_required']
-        if course in electives:
-            # removing from electives is okay so long as...
-            if term is None:
-                 return len(electives)-1 >= max_electives
-            # changing the course is okay if it's already in electives
-            return True
-        else:
-            #if it's already not in electives, fine to keep it out? Unless there are too few, then we want to assign another,
-            # so None would not be valid. Get it in there!
-            if term is None:
-                return len(electives) < max_electives
-            return len(electives)+1 > max_electives
-
-    def _season_constraint(self,course, term, assignment):
-        return self._get_season(term) in self.course_list.at[course, Scheduler.TERMS]
-
 
     def _create_csp(self):
         lower_bound = 1
@@ -200,7 +222,7 @@ class Scheduler:
     def _get_program(self):
         return self.student_list.at[self.current_student, Scheduler.PROGRAM]
 
-    def _get_credits(self,course):
+    def _get_course_credits(self, course) -> int:
         return self.course_list.at[course,Scheduler.CREDITS]
 
     def _generate_available_courses(self, taken_courses: list[int]) -> pd.DataFrame:
@@ -243,6 +265,9 @@ class Scheduler:
             preference_value += 1
         return preference_value
 
+    def _get_student_max_credits(self):
+        return self.student_list.at[self.current_student, Scheduler.MAX_CREDITS]
+
 class SchedulerCSP(csp.CSP):
     def  __init__(self,variables, domains, neighbors, constraints):
         super().__init__(variables, domains, neighbors, constraints)
@@ -256,17 +281,14 @@ class SchedulerCSP(csp.CSP):
 
         return count(conflict(v) for v in self.neighbors[var])
 
-class SchedulerConstraint:
-    def __init__(self, scope, condition):
-        self.scope = scope
-        self.condition = condition
-        ...
-    def __call__(self, var, val, assignment):
-        return self.condition(var, val, self.scope, assignment)
+
+
+    # def __call__(self, var, val, assignment):
+    #     return self.condition(var, val, self.scope, assignment)
 
 
 def main():
     my_scheduler = Scheduler()
     my_scheduler.plan('F','courses.csv','students.csv' )
 
-main()
+# main()
