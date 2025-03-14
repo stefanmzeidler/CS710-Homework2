@@ -28,7 +28,7 @@ class Scheduler:
     CUTOFF = 'electives_cutoff'
     PREFERENCES_TOPICS = "preferences-topics"
     PREFERENCES_INSTRUCTORS = "preferences-instructors"
-    AREA = 'area'
+    AREA = 'Area'
     INSTRUCTORS = "Instructors"
     TERMS = 'Terms'
     CREDITS = 'Credits'
@@ -46,6 +46,7 @@ class Scheduler:
     class SchedulerCSP(csp.CSP):
         def __init__(self, variables, domains, constraints):
             super().__init__(variables, domains, None, constraints)
+            self.current = None
 
         @override
         def nconflicts(self, course, term, assignment):
@@ -115,7 +116,7 @@ class Scheduler:
         if course not in assignment.keys():
             return term is None
         return (assignment[course] is not None and term is not None) or (assignment[course] is None and term is None)
-        #
+
 
     def weighted_elective_constraint(self, **kwargs):
         course = kwargs['course']
@@ -125,38 +126,25 @@ class Scheduler:
         if len(assigned_electives) > self._get_max_electives():
             return self._preference_weight(course,term,assigned_electives)
         if len(assigned_electives) < self._get_max_electives():
-            return term is not None
+            return not self._preference_weight(course,term,assigned_electives)
         if course not in assignment.keys():
-            return term is None
+            return not self._preference_weight(course,term,assigned_electives)
         if term is None:
             return assignment[course] is None
         return self._preference_weight(course, term, assigned_electives)
-        # return (assignment[course] is not None and term is not None) or (
-        #             assignment[course] is None and term is None)
 
-    def _preference_weight(self, term, course, assigned_electives):
+
+    def _preference_weight(self, course, term, assigned_electives):
+        if course in assigned_electives:
+            unassigned_electives = list(set(self.electives) - set(assigned_electives))
+            for elective in unassigned_electives:
+                if self._get_preference_value(course) > self._get_preference_value(elective):
+                    return term is None
+            return term is not None
         for elective in assigned_electives:
             if self._get_preference_value(course) > self._get_preference_value(elective):
                 return term is not None
         return term is None
-
-        #
-        # if course in self._get_assigned_electives(assignment):
-        #     return term is not None
-        # return term is None
-
-        # if course in assignment.keys():
-        #     return term is not None
-        # return term == assignment[course]
-        # max_electives = self._get_max_electives()
-        # if term is None and course in assigned_electives:
-        #     assigned_electives.remove(course)
-        #     return len(assigned_electives) > max_electives
-        # elif term is not None and course not in assigned_electives:
-        #     return len(assigned_electives) < max_electives
-
-
-        # return len(assigned_electives) == max_electives
 
     def season_constraint(self, **kwargs):
         if(kwargs['term']) is None:
@@ -164,16 +152,12 @@ class Scheduler:
         return self._get_season(kwargs['term']) in kwargs['scope']
 
     def min_conflicts(self, csprob, current, max_steps=100000):
-        """Solve a CSP by stochastic Hill Climbing on the number of conflicts."""
-        # Generate a complete assignment for all variables (probably with conflicts)
-        # csprob.current = current = {}
         csprob.current = current
         for var in csprob.variables:
             val = self.min_conflicts_value(csprob, var, current)
             csprob.assign(var, val, current)
-        # Now repeatedly choose a random conflicted variable and change it
         for i in range(max_steps):
-            no_assigned_electives = len(self._get_assigned_electives(current))
+            # no_assigned_electives = len(self._get_assigned_electives(current))
             conflicted = csprob.conflicted_vars(current)
             if not conflicted:
                 return current
@@ -186,10 +170,6 @@ class Scheduler:
         """Return the value that will give var the least number of conflicts.
         If there is a tie, choose at random."""
         return min(csp.domains[var], key=lambda val: csp.nconflicts(var, val, current))
-        # if var in self.required_courses:
-        #     return min(csp.domains[var], key=lambda val: csp.nconflicts(var, val, current))
-        # return argmax_random_tie(csp.domains[var], key=lambda val: csp.nconflicts(var, val, current))
-
 
     def plan(self, initial_season: str, course_file: str, student_file: str):
         self.initial_season = initial_season
@@ -199,78 +179,67 @@ class Scheduler:
         for index, row in self.student_list.iterrows():
             self.current_student = index
             program = self.student_list.at[self.current_student, Scheduler.PROGRAM]
-            if program == 'BS' or program == 'BS':
+            if program == 'BS' or program == 'BA':
                 all_courses = self.course_list.index
                 self.required_courses = self._get_required_courses()
-                # cutoff = self.program_requirements.at[program, Scheduler.CUTOFF]
                 self.electives = list(set(all_courses) - set(
-                    self.required_courses))  # self.electives = [course for course in self.electives if course >= cutoff]
-            my_required_csp, my_elective_csp = self._create_csps()
-            if my_required_csp is None:
+                    self.required_courses))
+            my_csp = self._create_csp()
+            if my_csp is None:
                 print("No solution")
             else:
-                required_courses_solution = self.min_conflicts(my_required_csp, {})
-                elective_courses_solution = self.min_conflicts(my_elective_csp,required_courses_solution)
-                print(self.solution_to_string(elective_courses_solution))
+                solution = self.min_conflicts(my_csp, {})
+                print(self.solution_to_string(solution))
+            my_weighted_csp = self._create_csp(weighted=True)
+            if my_weighted_csp is None:
+                print("No solution")
+            else:
+                solution = self.min_conflicts(my_weighted_csp, {})
+                print(self.solution_to_string(solution))
 
-    def _create_csps(self):
-        lower_bound = 0
-        max_terms = self._get_max_terms()
+    def _create_csp(self, weighted = False):
+        courses, domains = self._topological_sort()
+        constraints = self._get_constraints(courses,weighted)
+        for key, value in domains.items():
+            if len(value) == 0:
+                return None
+        return self.SchedulerCSP(courses, domains, constraints)
+
+    def _get_constraints(self, courses,weighted):
         constraints = defaultdict(list)
         transfers_and_taken = self._get_transfers() + self._get_taken()
-        test = self._topological_sort()
-        variables = []
+        for course in courses:
+            if course in self.electives:
+                if weighted:
+                    constraints[course].append(self.SchedulerConstraint(None, self.weighted_elective_constraint))
+                else:
+                    constraints[course].append(self.SchedulerConstraint(None, self.elective_constraint))
+            for prerequisite in set(self._get_prerequisites(course)).difference(
+                    set(transfers_and_taken)):
+                temp_constraint = self.SchedulerConstraint((prerequisite, course), self.prerequisite_constraint)
+                constraints[course].append(temp_constraint)
+                constraints[prerequisite].append(temp_constraint)
+            if len((seasons := self.course_list.at[course, Scheduler.TERMS])) < 2:
+                constraints[course].append(self.SchedulerConstraint(tuple(seasons), self.season_constraint))
+            constraints[course].append(self.SchedulerConstraint(None, self.max_credits_constraint))
+        return constraints
+
+    def _topological_sort(self):
+        lower_bound = 0
         domains = defaultdict(list)
+        variables = []
+        transfers_and_taken = self._get_transfers() + self._get_taken()
         available_courses = list(self._generate_available_courses(transfers_and_taken).index)
         while len(available_courses) > 0:
             lower_bound += 1
-            if lower_bound > max_terms:
-                return None, None
             variables = variables + available_courses
             for course in available_courses:
                 if course in self.electives:
                     domains[course] = [None]
-                    constraints[course].append(self.SchedulerConstraint(None, self.elective_constraint))
-                for prerequisite in set(self._get_prerequisites(course)).difference(
-                        set(transfers_and_taken)):
-                    temp_constraint = self.SchedulerConstraint((prerequisite, course), self.prerequisite_constraint)
-                    constraints[course].append(temp_constraint)
-                    constraints[prerequisite].append(temp_constraint)
-                if len((seasons := self.course_list.at[course, Scheduler.TERMS])) < 2:
-                    constraints[course].append(self.SchedulerConstraint(tuple(seasons), self.season_constraint))
-                constraints[course].append(self.SchedulerConstraint(None, self.max_credits_constraint))
                 domains[course] += list(range(lower_bound,
-                                              max_terms + 1))
+                                              self._get_max_terms() + 1))
             available_courses = list(self._generate_available_courses(variables + transfers_and_taken).index)
-
-        # required_variables = list(set(self._get_required_courses()).intersection(set(variables)))
-        required_variables = [course_id for course_id in variables if course_id in self.required_courses]
-        elective_variables =  list(set(variables) - set(required_variables))
-        return self.SchedulerCSP(variables, domains, constraints),self.SchedulerCSP(elective_variables, domains, constraints)
-        # return self.SchedulerCSP(required_variables, domains, constraints),self.SchedulerCSP(elective_variables, domains, constraints)
-
-    def _topological_sort(self):
-        variables = []
-        available_courses = list(self._generate_available_courses(variables).index)
-        while len(available_courses) > 0:
-            variables = variables + available_courses
-            available_courses = list(self._generate_available_courses(variables).index)
-        transfers_and_taken = self._get_transfers() + self._get_taken()
-        return [variable for variable in variables if variable not in transfers_and_taken]
-        # def _get_constraints_and_domains(self, course, constraints, domains, lower_bound, max_terms, transfers_and_taken):
-    #     if course in self.electives:
-    #         domains[course] = [None]
-    #         constraints[course].append(self.SchedulerConstraint(None, self.elective_constraint))
-    #     for prerequisite in set(self._get_prerequisites(course)).difference(
-    #             set(transfers_and_taken)):
-    #         temp_constraint = self.SchedulerConstraint((prerequisite, course), self.prerequisite_constraint)
-    #         constraints[course].append(temp_constraint)
-    #         constraints[prerequisite].append(temp_constraint)
-    #     if len((seasons := self.course_list.at[course, Scheduler.TERMS])) < 2:
-    #         constraints[course].append(self.SchedulerConstraint(tuple(seasons), self.season_constraint))
-    #     constraints[course].append(self.SchedulerConstraint(None, self.max_credits_constraint))
-    #     domains[course] += list(range(lower_bound,
-    #                                   max_terms + 1))
+        return variables, domains
 
     def _get_season(self, term):
         if term % 2 == 1:
