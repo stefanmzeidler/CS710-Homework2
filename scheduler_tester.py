@@ -1,6 +1,5 @@
 import unittest
 from scheduler import *
-from scheduler_utils import *
 
 class MyTestCase(unittest.TestCase):
 
