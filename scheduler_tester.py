@@ -71,6 +71,6 @@ class MyTestCase(unittest.TestCase):
         self.assertTrue(electives_constraint.holds(552, 2, assignment))
 
 
-
-if __name__ == '__main__':
-    unittest.main()
+#
+# if __name__ == '__main__':
+#     unittest.main()

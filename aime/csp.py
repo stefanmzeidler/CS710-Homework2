@@ -10,8 +10,8 @@ from operator import eq, neg
 
 from sortedcontainers import SortedSet
 
-import search
-from utils import argmin_random_tie, count, first, extend
+from aime import search
+from aime.utils import argmin_random_tie, count, first, extend
 
 
 class CSP(search.Problem):

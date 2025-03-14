@@ -11,7 +11,7 @@ functions.
 import sys
 from collections import deque
 
-from utils import *
+from aime.utils import *
 
 
 class Problem:
