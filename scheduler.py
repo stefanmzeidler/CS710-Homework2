@@ -256,6 +256,9 @@ class Scheduler:
     def _get_course_credits(self, course) -> int:
         return self.course_list.at[course, Scheduler.CREDITS]
 
+    def _get_student_max_credits(self):
+        return self.student_list.at[self.current_student, Scheduler.MAX_CREDITS]
+
     def _get_taken(self):
         return self.student_list.at[self.current_student, self.TAKEN]
 
@@ -314,8 +317,56 @@ class Scheduler:
             preference_value += 1
         return preference_value
 
-    def _get_student_max_credits(self):
-        return self.student_list.at[self.current_student, Scheduler.MAX_CREDITS]
+class DataBase:
+    COURSE = 'Course'
+    ID = 'ID'
+    PROGRAM = 'program'
+    PREREQUISITES = "Prerequisites"
+    TRANSFERS = 'transfers'
+    TAKEN = 'taken'
+    MAX_TERMS = 'maxterms'
+    REQUIRED = 'required_courses'
+    CUTOFF = 'electives_cutoff'
+    PREFERENCES_TOPICS = "preferences-topics"
+    PREFERENCES_INSTRUCTORS = "preferences-instructors"
+    AREA = 'Area'
+    INSTRUCTORS = "Instructors"
+    TERMS = 'Terms'
+    CREDITS = 'Credits'
+    MAX_CREDITS = "maxcredits"
+    ELECTIVE_COURSES_REQUIRED = 'elective_courses_required'
+
+    def __init__(self, course_list,program_requirements,student_list):
+        self.course_list = course_list
+        self.program_requirements = program_requirements
+        self.student_list = student_list
+
+    def get_prerequisites(self, course):
+        return self.course_list.at[course, DataBase.PREREQUISITES]
+
+    def get_program(self,current_student):
+        return self.student_list.at[current_student, DataBase.PROGRAM]
+
+    def get_course_credits(self, course) -> int:
+        return self.course_list.at[course, Scheduler.CREDITS]
+
+    def get_student_max_credits(self,current_student):
+        return self.student_list.at[current_student, DataBase.MAX_CREDITS]
+
+    def get_taken(self,current_student):
+        return self.student_list.at[current_student, DataBase.TAKEN]
+
+    def get_transfers(self,current_student):
+        return self.student_list.at[current_student, DataBase.TRANSFERS]
+
+    def get_required_courses(self,current_student):
+        return self.program_requirements.at[self.get_program(current_student), Scheduler.REQUIRED]
+
+    def get_max_terms(self,current_student):
+        return self.student_list.at[current_student, DataBase.MAX_TERMS]
+
+    def get_max_electives(self,current_student):
+        return self.program_requirements.at[self.get_program(current_student), DataBase.ELECTIVE_COURSES_REQUIRED]
 
     # def __call__(self, var, val, assignment):  #     return self.condition(var, val, self.scope, assignment)
 
