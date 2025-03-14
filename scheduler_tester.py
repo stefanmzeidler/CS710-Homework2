@@ -50,11 +50,27 @@ class MyTestCase(unittest.TestCase):
 
     def test_max_credits_constraint(self):
         assignment = {422:3,423:3,425:3,431:3}
-        max_credits_constraint = Scheduler.SchedulerConstraint((351,), self.scheduler.max_credits_constraint)
+        max_credits_constraint = Scheduler.SchedulerConstraint(None, self.scheduler.max_credits_constraint)
         self.assertTrue(max_credits_constraint.holds(361,2,assignment))
         self.assertFalse(max_credits_constraint.holds(361,3,assignment))
         assignment = {361: 3, 423: 3, 425: 3, 431: 3}
         self.assertTrue(max_credits_constraint.holds(361,3,assignment))
         self.assertTrue(max_credits_constraint.holds(361, 2, assignment))
+
+    def test_electives_constraint(self):
+        all_courses = self.scheduler.course_list.index
+        program = 'BS'
+        self.scheduler.required_courses = self.scheduler.program_requirements.at[program, Scheduler.REQUIRED]
+        self.scheduler.electives = list(set(all_courses) - set(self.scheduler.required_courses))
+        electives_constraint = Scheduler.SchedulerConstraint(None,self.scheduler.elective_constraint)
+        assignment = {422:3,423:3,425:3}
+        self.assertTrue(electives_constraint.holds(422,2,assignment))
+        self.assertFalse(electives_constraint.holds(552, 2, assignment))
+        assignment = {351:3,423:3,425:3}
+        self.assertTrue(electives_constraint.holds(422,2,assignment))
+        self.assertTrue(electives_constraint.holds(552, 2, assignment))
+
+
+
 if __name__ == '__main__':
     unittest.main()
