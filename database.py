@@ -21,45 +21,56 @@ class DataBase:
     CREDITS = 'Credits'
     MAX_CREDITS = "maxcredits"
     ELECTIVE_COURSES_REQUIRED = 'elective_courses_required'
+    COURSE_EXCLUSIONS = 'course_exclusions'
+    TOTAL_CREDITS = 'total_credits'
 
     def __init__(self, course_file,student_file,requirements_file):
         self.course_list, self.program_requirements, self.student_list = DataBase.create_data_tables(course_file,
                                                                                                             student_file,
                                                                                                             requirements_file)
-    def get_prerequisites(self, course):
+    def get_prerequisites(self, course) -> list[int]:
         return self.course_list.at[course, DataBase.PREREQUISITES]
 
-    def get_program(self,current_student):
+    def get_program(self,current_student) -> str:
         return self.student_list.at[current_student, DataBase.PROGRAM]
 
     def get_course_credits(self, course) -> int:
         return self.course_list.at[course, DataBase.CREDITS]
 
-    def get_student_max_credits(self,current_student):
+    def get_student_max_credits(self,current_student) -> int:
         return self.student_list.at[current_student, DataBase.MAX_CREDITS]
 
-    def get_taken(self,current_student):
+    def get_taken(self,current_student) -> list[int]:
         return self.student_list.at[current_student, DataBase.TAKEN]
 
-    def get_transfers(self,current_student):
+    def get_transfers(self,current_student)-> list[int]:
         return self.student_list.at[current_student, DataBase.TRANSFERS]
 
-    def get_required_courses(self,current_student):
+    def get_required_courses(self,current_student)-> list[int]:
         return self.program_requirements.at[self.get_program(current_student), DataBase.REQUIRED]
 
-    def get_max_terms(self,current_student):
+    def get_max_terms(self,current_student) -> int:
         return self.student_list.at[current_student, DataBase.MAX_TERMS]
 
-    def get_max_electives(self,current_student):
+    def get_max_electives(self,current_student) ->int:
         return self.program_requirements.at[self.get_program(current_student), DataBase.ELECTIVE_COURSES_REQUIRED]
 
-    def get_all_courses(self):
+    def get_all_courses(self)-> list[int]:
         return list(self.course_list.index)
 
-    def get_seasons(self,course):
+    def get_seasons(self,course) -> list[str]:
         return self.course_list.at[course, DataBase.TERMS]
 
-    def get_preference_value(self, current_student, course):
+    def get_cutoff(self,current_student) ->int:
+        return self.program_requirements.at[self.get_program(current_student), DataBase.CUTOFF]
+
+    def get_course_exclusions(self,current_student) -> list[int]:
+        return self.program_requirements.at[self.get_program(current_student), DataBase.COURSE_EXCLUSIONS]
+
+    def get_program_credits_requirement(self,current_student) -> int:
+        return self.program_requirements.at[self.get_program(current_student), DataBase.TOTAL_CREDITS]
+
+    def get_preference_value(self, current_student, course) -> int:
         preference_value = 0
         preferred_instructors = self.student_list.at[current_student, DataBase.PREFERENCES_INSTRUCTORS]
         course_instructors = self.course_list.at[course, DataBase.INSTRUCTORS]

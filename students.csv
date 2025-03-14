@@ -1,3 +1,4 @@
 ﻿ID,program,transfers,taken,maxcredits,maxterms,preferences-topics,preferences-instructors
-1,BS,[],[],12,6,"[coding, development]","[Nipu, Boyland]"
-2,BS,[],[],12,5,"[development,systems,ethics,coding]","[Nipu, Rock,Thomas,Cheng,Nowrin]"
+1,BS,"[250,251]",[],2,6,"[coding, development]","[Nipu, Boyland]"
+2,CS-minor,"[150,250]",[],12,5,"[development,systems,ethics,coding]","[Nipu, Rock,Thomas,Cheng,Nowrin]"
+3,BA,"[150,250]",[],12,5,"[development,systems,ethics,coding]","[Nipu, Rock,Thomas,Cheng,Nowrin]"
