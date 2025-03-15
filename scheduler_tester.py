@@ -29,7 +29,6 @@ class MyTestCase(unittest.TestCase):
 
     def test_failure(self):
         files = ['test_bs_failure.csv', 'test_ba_failure.csv', 'test_cs_minor_failure.csv']
-        files = ['test_cs_minor_failure.csv']
         for file_index,file in enumerate(files):
             print(f"Testing round {file_index}:\n")
             my_scheduler = Scheduler('F', 'courses.csv', file, 'program_requirements.csv')

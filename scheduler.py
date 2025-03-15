@@ -47,18 +47,29 @@ class Scheduler:
             return True
 
         def _make_arc_consistent(self, course, neighbor):
-            for val1 in self.domains[course]:
+            for val1 in self.curr_domains[course]:
                 keep = False
                 if val1 is not None:
-                    for val2 in self.domains[neighbor]:
-                        for constraint in self.constraints[course]:
-                            if constraint.scope is not None and course in constraint.scope and neighbor in constraint.scope:
-                                if constraint.holds(course = course, term = val1, assignment={neighbor: val2}):
-                                    keep = True
-                                    break
+                    for val2 in self.curr_domains[neighbor]:
+                        if self._make_arc_consistent_helper(course, val1, neighbor,val2):
+                            keep = True
+                            break
+                        # for constraint in self.constraints[course]:
+                        #     if constraint.scope is not None and course in constraint.scope and neighbor in constraint.scope:
+                        #         if constraint.holds(course = course, term = val1, assignment={neighbor: val2}):
+                        #             keep = True
+                        #             break
                 if not keep:
                     self.prune(course, val1, None)
             return self.curr_domains[course]
+
+        def _make_arc_consistent_helper(self,course,val1,neighbor,val2):
+            for constraint in self.constraints[course]:
+                if constraint.scope is not None and course in constraint.scope and neighbor in constraint.scope:
+                    if constraint.holds(course=course, term=val1, assignment={course: val1, neighbor: val2}):
+                        return True
+            return False
+
 
     class SchedulerConstraint:
         def __init__(self, scope, condition):
@@ -101,9 +112,8 @@ class Scheduler:
         previous_term_courses = [previous_course for previous_course in assignment.keys() if (assignment[previous_course] is not None and assignment[previous_course] == term -1)]
         prerequisites = self.db.get_prerequisites(course)
         previous_prerequisites = set(previous_term_courses).intersection(set(prerequisites))
-        previous_term_credits = self.get_term_credits(course, term-1, assignment)
         if len(previous_prerequisites) == 0:
-            return previous_term_credits + self.db.get_course_credits(course) > self.db.get_student_max_credits(self.current_student)
+            return not self.max_credits_constraint(course = course, term =  term-1, assignment = assignment)
         return True
 
 
@@ -115,7 +125,6 @@ class Scheduler:
             return True
         max_credits = self.db.get_student_max_credits(self.current_student)
         credits_in_term = self.get_term_credits(course,term,assignment)
-
         return self.db.get_course_credits(course) + credits_in_term <= max_credits
 
     def total_credits_constraint(self, **kwargs):
@@ -191,6 +200,7 @@ class Scheduler:
         if my_csp is not None:
             if not my_csp.check_arc_consistency(self.required_courses):
                 return self.current_student, self.db.get_program(self.current_student), None, None
+            my_csp.domains = my_csp.curr_domains
             solution = self.min_conflicts(my_csp,state_creation_mode=state_creation_mode)
             solution = self._solution_to_dframe(solution)
             return self.current_student, self.db.get_program(self.current_student), my_csp.nassigns, solution
@@ -200,9 +210,6 @@ class Scheduler:
 
     def min_conflicts(self, csprob, state_creation_mode ='topological_min_conflicts', max_steps=100000):
         current = csprob.current
-        # for var in csprob.variables:
-        #     val = self.min_conflicts_value(csprob, var, current)
-        #     csprob.assign(var, val, current)
         self._create_initial_state(csprob, current, state_creation_mode)
         for i in range(max_steps):
             conflicted = csprob.conflicted_vars(current)
@@ -285,11 +292,14 @@ class Scheduler:
         if self.db.get_student_max_credits(self.current_student) < 4:
             return None
         courses, domains = self._topological_sort()
-        for key, value in domains.items():
-            if key in self.required_courses and len(value) == 0:
-                return None
-        if not self._credit_consistency_check():
-            return None
+        domains = defaultdict(list)
+        for course in courses:
+            domains[course] = (list(range(1, self.db.get_max_terms(self.current_student)+1)))
+        # for key, value in domains.items():
+        #     if key in self.required_courses and len(value) == 0:
+        #         return None
+        # if not self._credit_consistency_check():
+        #     return None
         if self.db.get_program(self.current_student).lower() == 'cs-minor':
 
             constraints,binary_neighbors = self._get_minor_constraints(courses, weighted)
