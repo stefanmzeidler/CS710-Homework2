@@ -1,0 +1,13 @@
+﻿ID,program,transfers,taken,maxcredits,maxterms,preferences-topics,preferences-instructors
+1,CS-minor,"[250,251]","[351,317]",16,8,"[AI, theory]","[Mali,Cheng]"
+2,CS-minor,[],[],15,7,[],[]
+3,CS-minor,"[351,337,361]","[150,250,251,317,395,458]",16,7,[],[]
+4,CS-minor,"[351,337,361]",[],16,7,[],[]
+5,CS-minor,[],"[150,250,251,317,395,458]",16,7,[],[]
+6,CS-minor,"[425,459,469,422,557]",[],16,7,[],[]
+7,CS-minor,"[425,459,469,557]","[150,250,251,317,395,458]",16,7,[],[]
+8,CS-minor,[],[351],16,7,[],[]
+9,CS-minor,"[250,251]","[351,317]",16,8,[],[]
+10,CS-minor,"[250,251]","[351,317]",16,8,"[AI, systems,coding,theory,development,security]","[Sorenson,Nipu,Rock,Singh,Mali,Cheng,Nowrin,Boyland,Kate,McRoy,Yu,Zhao,Thomas,Zeng,Rezaie]"
+11,CS-minor,"[250,251]","[351,317]",16,8,"[AI, systems,coding,theory,development,security]",[]
+12,CS-minor,"[250,251]","[351,317]",16,8,[],"[Sorenson,Nipu,Rock,Singh,Mali,Cheng,Nowrin,Boyland,Kate,McRoy,Yu,Zhao,Thomas,Zeng,Rezaie]"
