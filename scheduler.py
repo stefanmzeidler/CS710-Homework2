@@ -12,7 +12,6 @@ from typing import override, Tuple, Optional
 import pandas as pd
 from database import DataBase
 
-
 from aime import csp
 from aime.utils import *
 
@@ -26,8 +25,8 @@ class Scheduler:
         self.required_courses = None
 
     class SchedulerCSP(csp.CSP):
-        def __init__(self, variables, domains, constraints,current):
-            super().__init__(variables, domains, None, constraints)
+        def __init__(self, variables, domains, binary_neighbors, constraints, current):
+            super().__init__(variables, domains, binary_neighbors, constraints)
             self.current = current
 
         @override
@@ -35,6 +34,31 @@ class Scheduler:
             """Return the number of conflicts var=val has with other variables."""
 
             return count((not constraint.holds(course, term, assignment)) for constraint in self.constraints[course])
+
+
+        def check_arc_consistency(self,required_courses):
+            self.support_pruning()
+            for course, neighbors in self.neighbors.items():
+                if course in required_courses:
+                    for neighbor in neighbors:
+                        if neighbor in required_courses:
+                            if len(self._make_arc_consistent(course, neighbor)) == 0:
+                                return False
+            return True
+
+        def _make_arc_consistent(self, course, neighbor):
+            for val1 in self.domains[course]:
+                keep = False
+                if val1 is not None:
+                    for val2 in self.domains[neighbor]:
+                        for constraint in self.constraints[course]:
+                            if constraint.scope is not None and course in constraint.scope and neighbor in constraint.scope:
+                                if constraint.holds(course = course, term = val1, assignment={neighbor: val2}):
+                                    keep = True
+                                    break
+                if not keep:
+                    self.prune(course, val1, None)
+            return self.curr_domains[course]
 
     class SchedulerConstraint:
         def __init__(self, scope, condition):
@@ -67,6 +91,22 @@ class Scheduler:
                         assignment[prerequisite] == term - 1)
         return (term < assignment[dependent]) if course == prerequisite else (term > assignment[prerequisite])
 
+
+    def min_terms_constraint(self, **kwargs):
+        course = kwargs['course']
+        term = kwargs['term']
+        assignment = kwargs['assignment']
+        if term is None or term == 1:
+            return True
+        previous_term_courses = [previous_course for previous_course in assignment.keys() if (assignment[previous_course] is not None and assignment[previous_course] == term -1)]
+        prerequisites = self.db.get_prerequisites(course)
+        previous_prerequisites = set(previous_term_courses).intersection(set(prerequisites))
+        previous_term_credits = self.get_term_credits(course, term-1, assignment)
+        if len(previous_prerequisites) == 0:
+            return previous_term_credits + self.db.get_course_credits(course) > self.db.get_student_max_credits(self.current_student)
+        return True
+
+
     def max_credits_constraint(self, **kwargs):
         course = kwargs['course']
         term = kwargs['term']
@@ -74,8 +114,8 @@ class Scheduler:
         if term is None:
             return True
         max_credits = self.db.get_student_max_credits(self.current_student)
-        courses_in_term = [key for key in assignment if (assignment[key] == term and key != course)]
-        credits_in_term = sum([self.db.get_course_credits(course_in_term) for course_in_term in courses_in_term])
+        credits_in_term = self.get_term_credits(course,term,assignment)
+
         return self.db.get_course_credits(course) + credits_in_term <= max_credits
 
     def total_credits_constraint(self, **kwargs):
@@ -89,7 +129,6 @@ class Scheduler:
         return True
 
     def cut_off_credits_constraint(self, **kwargs):
-        # course = kwargs['course']
         term = kwargs['term']
         assignment = kwargs['assignment']
         cutoff = self.db.get_cutoff(self.current_student)
@@ -147,22 +186,24 @@ class Scheduler:
             return True
         return self._get_season(kwargs['term']) in kwargs['scope']
 
-    def courseplan_local(self) -> Tuple[int, str, Optional[int],Optional[pd.DataFrame]]:
+    def courseplan_local(self,state_creation_mode='topological_min_conflicts') -> Tuple[int, str, Optional[int],Optional[pd.DataFrame]]:
         my_csp = self._create_csp()
         if my_csp is not None:
-            solution = self.min_conflicts(my_csp)
+            if not my_csp.check_arc_consistency(self.required_courses):
+                return self.current_student, self.db.get_program(self.current_student), None, None
+            solution = self.min_conflicts(my_csp,state_creation_mode=state_creation_mode)
             solution = self._solution_to_dframe(solution)
             return self.current_student, self.db.get_program(self.current_student), my_csp.nassigns, solution
         else:
             return self.current_student, self.db.get_program(self.current_student), None, None
-            # print(self._solution_to_dframe(solution).to_string())
 
 
-    def min_conflicts(self, csprob, max_steps=100000):
+    def min_conflicts(self, csprob, state_creation_mode ='topological_min_conflicts', max_steps=100000):
         current = csprob.current
-        for var in csprob.variables:
-            val = self.min_conflicts_value(csprob, var, current)
-            csprob.assign(var, val, current)
+        # for var in csprob.variables:
+        #     val = self.min_conflicts_value(csprob, var, current)
+        #     csprob.assign(var, val, current)
+        self._create_initial_state(csprob, current, state_creation_mode)
         for i in range(max_steps):
             conflicted = csprob.conflicted_vars(current)
             if not conflicted:
@@ -172,13 +213,37 @@ class Scheduler:
             csprob.assign(var, val, current)
         return None
 
+
+    def _create_initial_state(self, csprob, current, state_creation_mode):
+        match state_creation_mode:
+            case 'topological_min_conflicts':
+                for var in csprob.variables:
+                    val = self.min_conflicts_value(csprob, var, current)
+                    csprob.assign(var, val, current)
+            case 'random':
+                for var in shuffled(csprob.variables):
+                    val = random.choice(csprob.domains[var])
+                    csprob.assign(var, val, current)
+            case 'first_fit':
+                for var in sorted(csprob.variables):
+                    for val in csprob.domains[var]:
+                        if val is None:
+                            continue
+                        if self.get_term_credits(var, val, current) + self.db.get_course_credits(var) < self.db.get_student_max_credits(self.current_student):
+                            csprob.assign(var, val, current)
+
+            case _:
+                raise ValueError('Invalid mode')
+
+
     @staticmethod
     def min_conflicts_value(csp, var, current):
         """Return the value that will give var the least number of conflicts.
         If there is a tie, choose at random."""
         return min(csp.domains[var], key=lambda val: csp.nconflicts(var, val, current))
 
-    def plan(self):
+    def plan(self, state_creation_mode ='topological_min_conflicts', print_to_screen = True):
+        solutions = []
         for index, row in self.db.student_rows():
             self.current_student = index
             program = self.db.get_program(self.current_student)
@@ -190,27 +255,19 @@ class Scheduler:
             else:
                 self.required_courses = []
                 self.electives = all_courses
-            solution_data = self.courseplan_local()
-            self._print_solution(solution_data)
+            solution_data = self.courseplan_local(state_creation_mode = state_creation_mode)
+            if print_to_screen:
+                self._print_solution(solution_data)
+            solutions.append(solution_data)
+        return solutions
 
-            # my_csp = self._create_csp()
-            # if my_csp is None:
-            #     print("No solution")
-            # else:
-            #     solution = self.min_conflicts(my_csp)
-            #     print(self._solution_to_dframe(solution).to_string())
-            # my_weighted_csp = self._create_csp(weighted=True)
-            # if my_weighted_csp is None:
-            #     print("No solution")
-            # else:
-            #     solution = self.min_conflicts(my_weighted_csp, {})
-            #     print(self.solution_to_string(solution))
 
-    def _print_solution(self,solution_data):
+    @staticmethod
+    def _print_solution(solution_data):
         if solution_data[2] is not None:
             print(f'Student id: {solution_data[0]}\nStudent Program:  {solution_data[1]}\nAssignments used: {solution_data[2]}\nCourse selection:\n {solution_data[3].to_string()}\n')
         else:
-            print(f'Student id: {solution_data[0]}\nStudent Program:  {solution_data[1]}\nAssignments used: 0\nCourse selection:\nNone\n')
+            print(f'Student id: {solution_data[0]}\nStudent Program:  {solution_data[1]}\nAssignments used: 0\nCourse selection:\nNo Solution\n')
 
 
     def _solution_to_dframe(self, solution) -> pd.DataFrame:
@@ -224,18 +281,44 @@ class Scheduler:
         return df
 
     def _create_csp(self, weighted = False):
+        self._check_transfer_credits()
         if self.db.get_student_max_credits(self.current_student) < 4:
             return None
         courses, domains = self._topological_sort()
         for key, value in domains.items():
             if key in self.required_courses and len(value) == 0:
                 return None
+        if not self._credit_consistency_check():
+            return None
         if self.db.get_program(self.current_student).lower() == 'cs-minor':
-            constraints = self._get_minor_constraints(courses, weighted)
+
+            constraints,binary_neighbors = self._get_minor_constraints(courses, weighted)
         else:
-            constraints = self._get_major_constraints(courses, weighted)
+            constraints,binary_neighbors = self._get_major_constraints(courses, weighted)
         current = self._previously_taken_assignment()
-        return self.SchedulerCSP(courses, domains, constraints, current)
+        return self.SchedulerCSP(courses, domains, binary_neighbors,constraints, current)
+
+    def _credit_consistency_check(self):
+        transfer_courses = self.db.get_transfers(self.current_student)
+        taken_courses = self.db.get_taken(self.current_student)
+        max_terms = self.db.get_max_terms(self.current_student)
+        max_credits = self.db.get_student_max_credits(self.current_student)
+        minimum_credits =  self.db.get_minimum_credits(self.current_student,
+                                                                     (taken_courses + transfer_courses))
+        return (max_terms  * max_credits) >   minimum_credits
+
+    def _check_transfer_credits(self):
+        if self.db.get_program(self.current_student).lower() == 'cs-minor':
+            transfer_courses = self.db.get_transfers(self.current_student)
+            taken_courses = self.db.get_taken(self.current_student)
+            if len(transfer_courses) > 1:
+                self.db.update_transfer_credits(self.current_student, max(transfer_courses, key=lambda
+                    course: self._check_transfer_credits_helper(course)))
+
+    def _check_transfer_credits_helper(self, course):
+        taken_courses = self.db.get_taken(self.current_student)
+        dependencies =  self.db.get_dependencies(course)
+        return len(list(set(dependencies) - set(taken_courses)))
 
     def _previously_taken_assignment(self):
         assignment = defaultdict(int)
@@ -245,30 +328,38 @@ class Scheduler:
 
     def _get_minor_constraints(self,courses,weighted):
         constraints = defaultdict(list)
+        binary_neighbors = defaultdict(list)
         transfers_and_taken = self.db.get_transfers(self.current_student) + self.db.get_taken(self.current_student)
         for course in courses:
-            self._get_prerequisite_constraints(course, constraints, transfers_and_taken)
+            constraints[course].append(self.SchedulerConstraint(None, self.min_terms_constraint))
+            self._get_prerequisite_constraints(course, constraints, binary_neighbors,transfers_and_taken)
             if course > 300 and course != 395:
                 self._get_cutoff_credits_constraint(course,constraints)
             self._get_total_credits_constraint(course, constraints)
 
-        return constraints
+        return constraints,binary_neighbors
 
 
     def _get_major_constraints(self, courses, weighted):
         constraints = defaultdict(list)
+        binary_neighbors = defaultdict(list)
         transfers_and_taken = self.db.get_transfers(self.current_student) + self.db.get_taken(self.current_student)
         for course in courses:
+            constraints[course].append(self.SchedulerConstraint(None, self.min_terms_constraint))
             if course in self.electives:
                 self._get_elective_constraint(course, constraints, weighted)
-            self._get_prerequisite_constraints(course, constraints,transfers_and_taken)
+            self._get_prerequisite_constraints(course, constraints,binary_neighbors,transfers_and_taken)
             self._get_seasons_constraint(course, constraints)
             self._get_max_credits_constraint(course,constraints)
-        return constraints
+        return constraints,binary_neighbors
 
-    def _get_prerequisite_constraints(self,course,constraints,transfers_and_taken):
-        for prerequisite in set(self.db.get_prerequisites(course)).difference(
-                set(transfers_and_taken)):
+    def _get_prerequisite_constraints(self,course,constraints, binary_neighbors,transfers_and_taken):
+        course_prerequisites = set(self.db.get_prerequisites(course))
+        unassigned_prerequisites = course_prerequisites.difference(
+                set(transfers_and_taken))
+        for prerequisite in unassigned_prerequisites:
+            binary_neighbors[course].append(prerequisite)
+            binary_neighbors[prerequisite].append(course)
             temp_constraint = self.SchedulerConstraint((prerequisite, course), self.prerequisite_constraint)
             constraints[course].append(temp_constraint)
             constraints[prerequisite].append(temp_constraint)
@@ -319,15 +410,6 @@ class Scheduler:
         return [elective for elective in self.electives if
          (elective in assignment.keys() and assignment[elective] is not None)]
 
-
-
-
-def main():
-    my_scheduler = Scheduler('F', 'courses.csv', 'students.csv','program_requirements.csv')
-    my_scheduler.plan()
-
-
-main()
-# seq = [5,None,3,2,4]
-# seq.sort()
-# print(seq)
+    def get_term_credits(self,course,term,assignment):
+        courses_in_term = [key for key in assignment if (assignment[key] == term and key != course)]
+        return sum([self.db.get_course_credits(course_in_term) for course_in_term in courses_in_term])
