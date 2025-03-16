@@ -61,6 +61,4 @@ def main():
         f.write(str_2 + "\n")
         f.write(str(avg_assigns) + "\n")
 
-# main()
-scheduler = Scheduler('S', 'courses.csv', 'test_ba_success.csv', 'program_requirements.csv')
-scheduler.plan(write_to_file=True, state_creation_mode='topological_min_conflicts')
+main()
