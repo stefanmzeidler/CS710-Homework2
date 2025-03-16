@@ -1,23 +1,23 @@
 Student id: 1
 Student Program:  CS-minor
-Solution Time (ms): 31
+Solution Time (ms): 15
 Assignments used: 20
 Course selection:
        Season          Courses
 Terms                        
 0          F  [251, 351, 317]
-1          S       [150, 250]
+1          S       [150, 337]
 
 Student id: 2
 Student Program:  CS-minor
-Solution Time (ms): 234
-Assignments used: 97
+Solution Time (ms): 0
+Assignments used: 23
 Course selection:
        Season          Courses
 Terms                        
 1          S  [150, 250, 395]
 2          F            [251]
-3          S       [337, 458]
+3          S       [337, 351]
 
 Student id: 3
 Student Program:  CS-minor
@@ -30,7 +30,7 @@ Terms
 
 Student id: 4
 Student Program:  CS-minor
-Solution Time (ms): 15
+Solution Time (ms): 0
 Assignments used: 21
 Course selection:
        Season                    Courses
@@ -55,13 +55,13 @@ Course selection:
        Season     Courses
 Terms                   
 0          F       [425]
-1          S  [250, 395]
+1          S  [150, 250]
 2          F  [251, 317]
 3          S       [337]
 
 Student id: 7
 Student Program:  CS-minor
-Solution Time (ms): 15
+Solution Time (ms): 0
 Assignments used: 15
 Course selection:
        Season                              Courses
@@ -80,23 +80,23 @@ Terms
 
 Student id: 9
 Student Program:  CS-minor
+Solution Time (ms): 0
+Assignments used: 20
+Course selection:
+       Season          Courses
+Terms                        
+0          F  [251, 351, 317]
+1          S       [150, 337]
+
+Student id: 10
+Student Program:  CS-minor
 Solution Time (ms): 15
 Assignments used: 20
 Course selection:
        Season          Courses
 Terms                        
 0          F  [251, 351, 317]
-1          S       [250, 337]
-
-Student id: 10
-Student Program:  CS-minor
-Solution Time (ms): 31
-Assignments used: 20
-Course selection:
-       Season          Courses
-Terms                        
-0          F  [251, 351, 317]
-1          S       [250, 337]
+1          S       [150, 250]
 
 Student id: 11
 Student Program:  CS-minor
@@ -106,7 +106,7 @@ Course selection:
        Season          Courses
 Terms                        
 0          F  [251, 351, 317]
-1          S       [250, 337]
+1          S       [150, 250]
 
 Student id: 12
 Student Program:  CS-minor

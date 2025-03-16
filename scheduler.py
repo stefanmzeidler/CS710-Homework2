@@ -260,6 +260,37 @@ class Scheduler:
             self.solution_to_file(solutions, state_creation_mode)
         return solutions
 
+    def _create_csp(self, weighted=False):
+        self._check_transfer_credits()
+        if (not self._check_max_credits()) or (not self._credits_to_graduate_check()):
+            return None
+        courses, domains = self._topological_sort()
+        for key, value in domains.items():
+            if key in self.required_courses and len(value) == 0:
+                return None
+        if self.db.get_program(self.current_student).lower() == 'cs-minor':
+            constraints, binary_neighbors = self._get_minor_constraints(courses, weighted)
+        else:
+            constraints, binary_neighbors = self._get_major_constraints(courses, weighted)
+        current = self._previously_taken_assignment()
+        return self.SchedulerCSP(courses, domains, binary_neighbors, constraints, current)
+
+    def _topological_sort(self):
+        lower_bound = 0
+        domains = defaultdict(list)
+        variables = []
+        transfers_and_taken = self.db.get_transfers(self.current_student) + self.db.get_taken(self.current_student)
+        available_courses = list(self.db.generate_available_courses(transfers_and_taken).index)
+        while len(available_courses) > 0:
+            lower_bound += 1
+            variables = variables + available_courses
+            for course in available_courses:
+                if course in self.electives:
+                    domains[course] = [None]
+                domains[course] += list(range(lower_bound, self.db.get_max_terms(self.current_student) + 1))
+            available_courses = list(self.db.generate_available_courses(variables + transfers_and_taken).index)
+        return variables, domains
+
     """Utility Functions----------------------------------------------------------------------------------------"""
 
     def solution_to_file(self, solution_data, state_creation_mode):
@@ -288,21 +319,6 @@ class Scheduler:
         df = pd.DataFrame(data).set_index('Terms')
         df.sort_index(inplace=True)
         return df
-
-    def _create_csp(self, weighted=False):
-        self._check_transfer_credits()
-        if (not self._check_max_credits()) or (not self._credits_to_graduate_check()):
-            return None
-        courses, domains = self._topological_sort()
-        for key, value in domains.items():
-            if key in self.required_courses and len(value) == 0:
-                return None
-        if self.db.get_program(self.current_student).lower() == 'cs-minor':
-            constraints, binary_neighbors = self._get_minor_constraints(courses, weighted)
-        else:
-            constraints, binary_neighbors = self._get_major_constraints(courses, weighted)
-        current = self._previously_taken_assignment()
-        return self.SchedulerCSP(courses, domains, binary_neighbors, constraints, current)
 
     def _get_courses_and_domains(self):
         taken_and_transfers = self.db.get_taken(self.current_student) + self.db.get_transfers(self.current_student)
@@ -406,21 +422,6 @@ class Scheduler:
         if len((seasons := self.db.get_seasons(course))) < 2:
             constraints[course].append(self.SchedulerConstraint(tuple(seasons), self.season_constraint))
 
-    def _topological_sort(self):
-        lower_bound = 0
-        domains = defaultdict(list)
-        variables = []
-        transfers_and_taken = self.db.get_transfers(self.current_student) + self.db.get_taken(self.current_student)
-        available_courses = list(self.db.generate_available_courses(transfers_and_taken).index)
-        while len(available_courses) > 0:
-            lower_bound += 1
-            variables = variables + available_courses
-            for course in available_courses:
-                if course in self.electives:
-                    domains[course] = [None]
-                domains[course] += list(range(lower_bound, self.db.get_max_terms(self.current_student) + 1))
-            available_courses = list(self.db.generate_available_courses(variables + transfers_and_taken).index)
-        return variables, domains
 
     def _get_season(self, term):
         if term % 2 == 1:
