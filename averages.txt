@@ -1,0 +1,4 @@
+Average times (ms) over 15 iterations by initial state: 
+defaultdict(<class 'int'>, {'random': 279, 'first_fit': 228, 'topological_min_conflicts': 184})
+Average assignments over 15 iterations by initial state: 
+defaultdict(<class 'int'>, {'random': 53, 'first_fit': 33, 'topological_min_conflicts': 22})
