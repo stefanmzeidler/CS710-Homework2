@@ -1,0 +1,162 @@
+Student id: 1
+Student Program:  BS
+Solution Time (ms): N/A
+Assignments used: 0
+Course selection:
+No Solution
+
+Student id: 2
+Student Program:  BS
+Solution Time (ms): 31
+Assignments used: 37
+Course selection:
+       Season                    Courses
+Terms                                  
+0          F       [250, 251, 351, 317]
+1          S  [150, 337, 361, 395, 458]
+2          F  [423, 431, 537, 557, 594]
+3          S            [535, 552, 595]
+
+Student id: 3
+Student Program:  BS
+Solution Time (ms): 0
+Assignments used: 18
+Course selection:
+       Season                              Courses
+Terms                                            
+0          F  [425, 459, 469, 422, 557, 150, 250]
+1          S                      [251, 317, 395]
+2          F                      [337, 351, 458]
+3          S                 [361, 431, 535, 537]
+4          F                                [594]
+5          S                                [595]
+
+Student id: 4
+Student Program:  BS
+Solution Time (ms): 0
+Assignments used: 13
+Course selection:
+       Season                                                                 Courses
+Terms                                                                               
+0          F  [150, 250, 251, 317, 337, 351, 361, 395, 431, 458, 535, 537, 594, 595]
+1          S                                                         [422, 425, 459]
+
+Student id: 5
+Student Program:  BS
+Solution Time (ms): 0
+Assignments used: 15
+Course selection:
+       Season                                                                 Courses
+Terms                                                                               
+0          F  [150, 250, 251, 317, 337, 351, 361, 395, 431, 458, 535, 537, 594, 595]
+1          S                                                         [459, 520, 552]
+
+Student id: 6
+Student Program:  BS
+Solution Time (ms): 15
+Assignments used: 10
+Course selection:
+       Season                                                                                Courses
+Terms                                                                                              
+0          F  [425, 459, 557, 150, 250, 251, 317, 337, 351, 361, 395, 431, 458, 535, 537, 594, 595]
+
+Student id: 7
+Student Program:  BS
+Solution Time (ms): 0
+Assignments used: 8
+Course selection:
+       Season                                                                                     Courses
+Terms                                                                                                   
+0          F  [425, 459, 469, 557, 150, 250, 251, 317, 337, 351, 361, 395, 431, 458, 535, 537, 594, 595]
+
+Student id: 8
+Student Program:  BS
+Solution Time (ms): 31
+Assignments used: 33
+Course selection:
+       Season                    Courses
+Terms                                  
+0          F                 [150, 250]
+1          S            [251, 317, 395]
+2          F       [337, 351, 458, 557]
+3          S  [361, 422, 431, 535, 537]
+4          F                 [520, 594]
+5          S                      [595]
+
+Student id: 9
+Student Program:  BS
+Solution Time (ms): N/A
+Assignments used: 0
+Course selection:
+No Solution
+
+Student id: 10
+Student Program:  BS
+Solution Time (ms): N/A
+Assignments used: 0
+Course selection:
+No Solution
+
+Student id: 11
+Student Program:  BS
+Solution Time (ms): 15
+Assignments used: 29
+Course selection:
+       Season                    Courses
+Terms                                  
+1          S            [150, 250, 395]
+2          F                 [251, 317]
+3          S  [337, 351, 425, 458, 557]
+4          F  [361, 431, 469, 535, 537]
+5          S                      [594]
+6          F                      [595]
+
+Student id: 12
+Student Program:  BS
+Solution Time (ms): 15
+Assignments used: 8
+Course selection:
+       Season                                                                                     Courses
+Terms                                                                                                   
+0          F  [425, 459, 469, 557, 150, 250, 251, 317, 337, 351, 361, 395, 431, 458, 535, 537, 594, 595]
+
+Student id: 13
+Student Program:  BS
+Solution Time (ms): N/A
+Assignments used: 0
+Course selection:
+No Solution
+
+Student id: 14
+Student Program:  BS
+Solution Time (ms): N/A
+Assignments used: 0
+Course selection:
+No Solution
+
+Student id: 15
+Student Program:  BS
+Solution Time (ms): N/A
+Assignments used: 0
+Course selection:
+No Solution
+
+Student id: 16
+Student Program:  BS
+Solution Time (ms): N/A
+Assignments used: 0
+Course selection:
+No Solution
+
+Student id: 17
+Student Program:  BS
+Solution Time (ms): 15
+Assignments used: 30
+Course selection:
+       Season                         Courses
+Terms                                       
+0          F            [250, 251, 317, 351]
+1          S       [150, 337, 361, 422, 458]
+2          F  [395, 431, 469, 535, 537, 594]
+3          S                      [552, 595]
+

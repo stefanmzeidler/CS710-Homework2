@@ -1,0 +1,46 @@
+Student id: 1
+Student Program:  BS
+Assignments used: 109
+Course selection:
+       Season                    Courses
+Terms                                  
+1          S            [150, 250, 395]
+2          F                 [251, 317]
+3          S       [337, 351, 425, 458]
+4          F  [361, 431, 535, 537, 557]
+5          S                 [520, 594]
+6          F                      [595]
+
+Student id: 2
+Student Program:  BS
+Assignments used: 112
+Course selection:
+       Season                    Courses
+Terms                                  
+0          F       [250, 251, 351, 317]
+1          S  [150, 337, 361, 395, 535]
+2          F  [431, 458, 469, 557, 594]
+3          S                 [537, 595]
+4          F                      [520]
+
+Student id: 3
+Student Program:  BA
+Assignments used: 114
+Course selection:
+       Season                    Courses
+Terms                                  
+0          F                 [150, 250]
+1          S            [251, 317, 395]
+2          F  [337, 351, 458, 459, 469]
+
+Student id: 4
+Student Program:  CS-minor
+Assignments used: 125
+Course selection:
+       Season     Courses
+Terms                   
+1          S       [250]
+2          F       [251]
+3          S  [351, 459]
+4          F       [431]
+
