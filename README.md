@@ -45,9 +45,7 @@ For this assignment we were tasked with solving a constraint satisfaction proble
 
 For the design of the constraint satisfaction problem, I decided to use each course as a variable and each assignment was the term it would be taken in. From experience in homework 1, creating terms as variables and determining which courses were in requires factorial time complexity. I also found it easier to conceptualize constraints such as prerequisites must come before dependents using courses as variables. Using courses as the variables also meant that variables and constraints could be conceptualized as a nearly acyclic graph. If we treated the binary prerequisite constraints as directional, then we could transform the graph into a directed, acyclic graph and use a variation of topological sorting to contours of equal distance from the “start” of a student’s enrollment. Below I show the contours for a student who has no transfers or previously taken courses, but different contours can be generated based on which courses have already been taken.
 
-![A diagram of a network  AI-generated content may be incorrect.](data:image/png;base64...)
-
-![](data:image/png;base64...)![](data:image/png;base64...)![](data:image/png;base64...)![](data:image/png;base64...)![](data:image/png;base64...)![](data:image/png;base64...)![](data:image/png;base64...)![](data:image/png;base64...)![](data:image/png;base64...)![](data:image/png;base64...)![](data:image/png;base64...)![](data:image/png;base64...)
+<img width="779" height="703" alt="image" src="https://github.com/user-attachments/assets/75b34d03-5270-496c-8005-a27e83f7513d" />
 
 If we proceed through these contours as we construct the CSP, then we can easily define a lower bound for the domains of each course as the contour since a course cannot be taken before its prerequisite. Doing this also provides us with a convenient sorting of the variables, and we can minimize the number of assignments needed if we assign courses in order of contour.
 
