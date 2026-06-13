@@ -1,6 +1,6 @@
 **Constraint Satisfaction**
   
-Stefan Zeidler
+Stefan Zeidler  
 CS 710  
 Dr. Susan McRoy   
 March 15, 2025  
