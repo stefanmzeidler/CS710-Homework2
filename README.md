@@ -57,87 +57,15 @@ I created a class for the CSP that is an extension of the AIME CSP class. The or
 
 ## Classes
 
-CLASS SchedulerCSP
+<img width="975" height="643" alt="image" src="https://github.com/user-attachments/assets/4d0cd578-f388-4011-bb3d-896404479213" />
 
-Fields
-
-variables**:** LIST**[**course\_ids**]**
-
-/\*The course\_ids for the CSP problem\*/
-
-domains**:** **{**course\_id**:** LIST**[**terms**]}**
-
-/\*The possible domains for each course\*/
-
-binary\_neighbors**:** **{**course\_id**:** list**[**course\_id**]}**
-
-/\*For each course, contains the list of neighboring
-
-variables that it shares a binary constraint with\*/
-
-constraints**:** **{**course\_id**:** list**[**constraint**]}**
-
-/\*For each course, lists the applicable contraints.\*/
-
-current**:** **{**course\_id **:** term**}**
-
-/\*Current term assignments for each course.\*/
-
-Methods
-
-/\*Determines the number of conflicts for a given assignment\*/
-
-FUNCTION nconflicts**(**course**,** term**,** assignment**)** RETURNS INT
-
-count **<-** 0
-
-FOR EACH course constraint DO
-
-IF NOT contraint**.**holds**(**course**,** term**,** assignment**)** THEN
-
-count **+=** 1
-
-RETURN count
-
-FUNCTION conflicted\_vars**(**assignment**)** RETURNS LIST**[**course\_id**]**
-
-conflicted\_vars **<-** LIST**[**course\_id**]**
-
-FOR EACH course in variables DO
-
-IF nconflicts**(**course**,** assignment**(**term**),** assignment**)** **>** 0 THEN
-
-APPEND**(**conflicted\_vars**,** course**)**
-
-RETURN conflicted\_vars
 
 The class keeps track of variables and their domains and constraints. It also records the current assignments for the variables. It provides two functions to count the number of violated constraints for a given course and term assignment, needed for the min conflicts heuristic. The second function will return the list of courses that are still conflicted.
 
 I also also created a class for each constraint that contains the scope of the constraint as well as the condition to check.
 
-CLASS SchedulerContraint
+<img width="882" height="283" alt="image" src="https://github.com/user-attachments/assets/81043ac5-d2bb-4206-bfef-34137c61b157" />
 
-Fields
-
-scope**:** any
-
-/\*The scope of the condition.
-
-Can be binary, global, or unary.\*/
-
-condition**:** FUNCTION**(**course**,** term**,** assignment**)** RETURNS BOOLEAN
-
-/\*The constraint condition\*/
-
-Methods
-
-/\*Checks whether constraint violated\*/
-
-FUNCTION holds**(**course**,** term**,** assignment**):** RETURNS BOOLEAN
-
-RETURN condition**(**course**,** term**,** assignment**)**
-
-FUNCTION
 
 Given the course, term, and assignment, the holds function will return whether the constraint has been violated. Having a scope let’s us use both unary, binary, and global constraints.
 
@@ -145,313 +73,67 @@ Given the course, term, and assignment, the holds function will return whether t
 
 Tests whether prerequisites and dependents are in order. Also tests that 594 immediately follows 595.
 
-FUNCTION prerequisite\_constraint**(**scope**,** course**,** term**,** assignment**)** RETURNS BOOLEAN
+<img width="882" height="524" alt="image" src="https://github.com/user-attachments/assets/cc06d670-3995-4a6c-896a-bef5192dfba5" />
 
-prerequisite**,** dependent **<-** scope
-
-IF term **=** NONE**:**
-
-RETURN TRUE
-
-/\*Assignments may not have been made yet
-
-during initial assignment.\*/
-
-IF prerequisite NOT assigned THEN**:**
-
-IF course **=** prerequisite THEN
-
-RETURN TRUE
-
-ELSE
-
-RETURN term **=** NONE
-
-/\*You can't assign a dependent
-
-If the prereq hasn't been assigned\*/
-
-IF dependent NOT assigned THEN
-
-RETURN TRUE
-
-IF assignment**[**prerequisite**]** **=** NONE OR
-
-assignment**[**dependent**]** THEN
-
-RETURN TRUE
-
-IF prerequisite **=** 594 and dependent **=** 595 THEN
-
-RETURN 595 directly follows 594
-
-RETURN dependent after prerequisite
 
 Tests that if a term has more credits than the student allows.
 
-FUNCTION max\_credits\_constraint**(**course**,** term**,** assignment**)** RETURNS BOOLEAN
+<img width="855" height="171" alt="image" src="https://github.com/user-attachments/assets/9306134f-d4e7-471e-8b8a-11bdfc7cf556" />
 
-IF term **=** NONE THEN
-
-RETURN TRUE
-
-GET student\_max\_credits
-
-IF term\_credits **+** course\_credits **>** student\_max\_credits THEN
-
-RETURN FALSE
-
-RETURN TRUE
 
 Tests that the minimum number of terms are used. For an assignment, the constraint checks if the previous term does not contain any immediate course prerequisites. If not, it also checks if the previous term has enough space for the course. Prevents empty terms.
 
-FUNCTION min\_terms\_constraint**(**course**,** term**,** assignment**)** RETURNS BOOLEAN
-
-IF term **=** NONE OR tem **=** 1 THEN
-
-RETURN TRUE
-
-GET previous\_term from assignment
-
-IF no prerequisites IN previous\_term THEN
-
-RETURN NOT max\_credits\_constraint**(**course**,** term -1**,** assignment**)**
-
-/\*If there's room in previous term,
-
-this course should be in that term instead\*/
-
-RETURN TRUE
+<img width="837" height="201" alt="image" src="https://github.com/user-attachments/assets/a67e1231-60f0-4c48-b099-a948bcf3e541" />
 
 For CS-Minors, tests if the student has enrolled in too few or too many credits. A term assigned violates this constraint if setting an a term enrollment too none would result in too few courses or if setting a term enrollment to any term would result in too many courses.
 
-FUNCTION total\_credits\_constraint**(**term**,** assignment**)** RETURNS BOOLEAN
+<img width="830" height="208" alt="image" src="https://github.com/user-attachments/assets/6a1ca066-af5d-4197-9939-a33829240003" />
 
-/\*For CS-Minor\*/
-
-total\_credits **<-** SUM**(**credits IN assignment**)**
-
-IF total\_credits **<** 18 THEN
-
-RETURN term **!=** NONE
-
-/\*Allowable range of cfredits between 18 and 21\*/
-
-IF total\_credits **>** 21 THEN
-
-RETURN term **!=** NONE
-
-RETURN TRUE
 
 For CS-Minors, specifically for 300 level courses, checks if the student has enough credits above the 300 level.
 
-FUNCTION cut\_off\_credits\_constraint**(**term**,** assignment**)** RETURNS BOOLEAN
+<img width="857" height="241" alt="image" src="https://github.com/user-attachments/assets/a8ec8d78-1df6-4014-a54c-3bffac782a57" />
 
-GET elective\_cutoff /\*300-level\*/
-
-GET excluded\_courses
-
-cut\_off\_courses **<-** courses **>** cutoff
-
-AND NOT IN excluded courses
-
-AND IN assignments
-
-cutoff\_credits **<-** SUM**(**credits IN cut\_off\_courses**)**
-
-IF cutoff\_credits **<** 9 THEN
-
-RETURN term **!=** NONE
-
-RETURN TRUE
 
 For BA and BS students, this constraint checks if they have too many or too few elective courses, under the assumption that students don’t want to take unnecessary courses.
 
-FUNCTION elective\_contraints**(**course**,** term**,** assignment**)** RETURNS BOOLEAN
+<img width="834" height="312" alt="image" src="https://github.com/user-attachments/assets/ba961c3d-7390-4d2c-a255-723d11b981ae" />
 
-GET student\_max\_electives
-
-assigned\_electives **<-** electives IN assignment
-
-IF LENGTH**(**assigned\_electives**)** **>** student\_max\_electives THEN
-
-RETURN term **=** NONE
-
-IF LENGTH**(**assigned\_electives**)** **<** student\_max\_electives THEN
-
-RETURN term **!=** NONE
-
-IF course NOT assigned THEN
-
-RETURN term **=** NONE
-
-IF term **!=** NONE AND assigment**[**course**]** **!=** NONE THEN
-
-RETURN TRUE
-
-IF term **!=** NONE AND assignment**[**course**]** **!=** NONE THEN
-
-RETURN TRUE
-
-RETURN FALSE
 
 For courses that are only held in Spring or Fall semesters, checks that the assignment does not violate this.
 
-FUNCTION season\_constaint**(**scope**,** term**)** RETURNS BOOLEAN
+<img width="698" height="157" alt="image" src="https://github.com/user-attachments/assets/87aa52c0-ea05-4dbe-bb24-b93de3f52173" />
 
-IF term **=** NONE THEN
-
-RETURN TRUE
-
-offered\_seasons **<-** scope
-
-season **<-** get\_season**(**term**)**
-
-RETURN season IN offered\_seasons
 
 ## CSP construction
 
-Proceeds through the list of courses in the topological order described above, adding constraints based on the course and student type and domains based on contour. Also does precondition checks to see if the problem is solvable. For example, a student in the BS program with no previously taken courses will need a minimum of six terms to complete their degree.
+<img width="849" height="591" alt="image" src="https://github.com/user-attachments/assets/b972eee8-885b-4fba-98b9-9f4f1affb32d" />
 
-FUNCTION create\_csp**()** RETURNS SchedulerCSP OR NONE
-
-courses **<-** LIST**(**course\_id**)**
-
-domains **<-** **{**course\_id **:** LIST**(**term**)**
-
-current\_assignment **<-** **{**course\_id **:** term**}**
-
-binary\_neighbors **<-** **{**course\_id **:** LIST**(**course\_id**)}**
-
-constraints **<-** **{**course\_id **:** constraint**}**
-
-GET student\_max\_credits
-
-GET minimum\_credits\_for\_courses
-
-GET student\_max\_terms
-
-GET terms\_to\_graduate
-
-GET already\_taken\_courses
-
-IF student\_max\_credits **<** minimum\_credits\_for\_courses THEN
-
-RETURN NONE
-
-IF terms\_to\_graduate **<** student\_max\_terms THEN
-
-RETURN NONE
-
-courses**,** domains **<-** topological\_sort**()**
-
-FOR EACH domain**(**required\_course**)** DO
-
-IF domain**.**empty**()** RETURN NONE
-
-IF program **=** 'CS-minor' THEN
-
-constraints**,** binary\_neighbors **<-** get\_minor\_constraints**()**
-
-ELSE
-
-constraints**,** binary\_neighbors **<-** get\_major\_constraints**()**
-
-APPEND**(**current\_assignment**,** already\_taken\_courses**)**
-
-RETURN SchedulerCSP**(**courses**,** domains**,** binary\_neighbors**,** constraints**,** current**)**
 
 ## Creating Initial Assignments
 
 Creates one of three initial state types. For random, since the variables were inserted into the CSP in topological order, it shuffles the variables to undo this. It then assigns a random value from that variable’s domain. For first-fit search, it sorts the courses by number and then assigns a course to the first valid term that does not already have too many credits. For topological min conflicts, variables are assigned in topological order and values are chosen by the minimum number of conflicts. In the event of a tie, a lower value is chosen.
 
-FUNCTION create\_initial\_state**(**csp**,** assignment**,** state\_creation\_mode**)**
-
-IF state\_creation\_mode **=** 'topological\_min\_conflicts' THEN
-
-FOR course in csp**.**variables DO
-
-assigment**[**course**]** **<-** min\_conflicts(domain, assignment)
-
-ELSE IF state\_creation\_mode **=** 'random' THEN
-
-shuffle**(**csp**.**variables**)**
-
-FOR course in csp**.**variables DO
-
-assigment**[**course**]** **<-** random\_choice**(**domain**(**course**))**
-
-ELSE IF state\_creation\_mode **=** 'first\_fit' THEN
-
-sort**(**csp**.**variables**)** by course\_id
-
-FOR course in csp**.**variables DO
-
-FOR term in domain**(**course**)** DO
-
-IF term **=** NONE THEN
-
-CONTINUE
-
-IF max\_credits\_constraint**(**course**,** term**,** assignment**)** THEN
-
-assignment**[**course**]** **<-** term
-
-BREAK
-
-RETURN assignment
+<img width="859" height="423" alt="image" src="https://github.com/user-attachments/assets/89863bc4-fc45-4b66-a288-00277efbeff5" />
 
 ## Solution Algorithms
 
 This function creates the CSP and then passes it to the min\_conflicts algorithm.
 
-FUNCTION courseplan\_local**(**state\_creation\_mode**)** RETURNS solution OR NONE
+<img width="848" height="177" alt="image" src="https://github.com/user-attachments/assets/c234cf5b-e581-444a-8321-76e3753ebff8" />
 
-my\_csp **<-** create\_csp**()**
-
-IF my\_csp **!=** NONE THEN
-
-solution **<-** min\_conflicts**(**my\_csp**,** state\_creation\_mode**)**
-
-RETURN solution
-
-ELSE
-
-RETURN no solution
 
 Adaption of the AIME min\_conflicts algorithm to include global and unary constraints, such as the maximum credits in a term, and if the a term is the correct season for a course. Allows for different starting assignments.
 
-FUNCTION min\_conflicts**(**csp**,** state\_creation\_mode**)** RETURNS solution OR NONE
-
-max\_steps **<-** 100000
-
-current **<-** csp**.**current
-
-current **<-** create\_initial\_state**(**state\_creation\_mode**)**
-
-FOR i **<-** 1 to max\_steps DO
-
-conflicted **<-** csp**.**conflicted\_vars**(**current**)**
-
-IF conflicted**.**empty THEN
-
-RETURN current
-
-course **<-** random\_choice**(**conflicted**)**
-
-GET term with MIN**(**csp**.**nconflicts**(**course**,** term**))**
-
-current**[**course**]** **<-** term
-
-RETURN NONE
+<img width="864" height="282" alt="image" src="https://github.com/user-attachments/assets/b5a4f388-18da-4ae6-9477-d0f94a94cee7" />
 
 # Results and Discussion
 
 The following table shows the average times in milliseconds and number of assignments required to find a solution over 15 iterations for the same student. Whereas first-fit and topological min-search begin with a deterministic initial state, random start is not and this was used to account for hard and easy cases in the mix.
 
-|  |  |  |  |
-| --- | --- | --- | --- |
+
 |  | Random | First-fit | Topological |
+| --- | --- | --- | --- |
 | Time (ms) | 279 | 228 | 184 |
 | Assignments | 53 | 33 | 22 |
 
@@ -473,9 +155,8 @@ Based on the results above, performing a topological sorting, when possible, res
 
 # Appendix A – Test Cases
 
-|  |  |  |  |  |  |  |  |  |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | ID | program | transfers | taken | maxcredits | maxterms | | preferences-topics | preferences-instructors |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | BS | [] | [] | 16 | | 5 | [AI, theory] | [Mali,Cheng] |
 | 2 | BS | [250,251] | [351,317] | 15 | | 5 | [] | [] |
 | 3 | BS | [425,459,469,422,557] | [150, 250] | 16 | | 7 | [] | [] |
